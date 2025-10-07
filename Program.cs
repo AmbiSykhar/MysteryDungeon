@@ -1,13 +1,24 @@
-﻿namespace MysteryDungeon;
+﻿using SFML.System;
 
-internal class Program
+namespace MysteryDungeon;
+
+internal static class Program
 {
-	private static void Main(string[] args)
+	private static void Main()
 	{
-		DungeonGrid grid = new(new SFML.System.Vector2u(30, 20));
-		grid.Generate(new SFML.System.Vector2u(3, 2));
-		grid.Render();
+		while (true)
+		{
+			DungeonGrid grid = new();
+			grid.Generate(new Vector2i(60, 30), new Vector2i(6, 3), 7);
+			grid.Render();
 
-		Console.ReadLine();
+			var key = Console.ReadKey();
+
+			if (key.Key == ConsoleKey.Enter)
+			{
+				break;
+			}
+			Console.Clear();
+		}
 	}
 }
