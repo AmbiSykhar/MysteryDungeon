@@ -46,13 +46,15 @@ internal class DungeonGrid
 				{
 					this.FillRect(new(x * roomSize.X, y * roomSize.Y), roomSize, 255);
 
-					uint sizeX = (uint)rng.Next((int)MinimumRoomSize, (int)roomSize.X - 1);
-					uint sizeY = (uint)rng.Next((int)MinimumRoomSize, (int)roomSize.Y - 1);
+					Vector2u size = new((uint)rng.Next((int)MinimumRoomSize, (int)roomSize.X - 1),
+						                (uint)rng.Next((int)MinimumRoomSize, (int)roomSize.Y - 1));
 
-					uint roomX = (x * roomSize.X) + (uint)rng.Next(1, (int)roomSize.X - 2);
-					uint roomY = (y * roomSize.Y) + (uint)rng.Next(1, (int)roomSize.Y - 2);
+					uint remaining = roomSize - size;
 
-					this.FillRect(new(roomX, roomY), new(sizeX, sizeY), 0);
+					Vector2u pos = new((x * roomSize.X) + (uint)rng.Next(1, (int)remaining.X - 2),
+					                   (y * roomSize.Y) + (uint)rng.Next(1, (int)remaining.Y - 2));
+
+					this.FillRect(pos, size, 0);
 				}
 			}
 		}
@@ -66,19 +68,19 @@ internal class DungeonGrid
 			{
 				switch (this._grid[x, y])
 				{
-				case 0:
-					Console.Write("  ");
-					break;
+					case 0:
+						Console.Write("  ");
+						break;
 
-				case 1:
-					Console.ForegroundColor = ConsoleColor.White;
-					Console.Write("██");
-					break;
+					case 1:
+						Console.ForegroundColor = ConsoleColor.White;
+						Console.Write("██");
+						break;
 
-				case 255:
-					Console.ForegroundColor = ConsoleColor.Green;
-					Console.Write("██");
-					break;
+					case 255:
+						Console.ForegroundColor = ConsoleColor.Green;
+						Console.Write("██");
+						break;
 				}
 			}
 			Console.Write('\n');
