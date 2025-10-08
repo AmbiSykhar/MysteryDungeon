@@ -7,7 +7,7 @@ internal class DungeonGrid
 {
 	private const int MinimumRoomSize = 3;
 
-	private byte[,]? _grid;
+	public byte[,]? Grid { get; private set; }
 
 	private Vector2i _size;
 
@@ -17,7 +17,7 @@ internal class DungeonGrid
 		set
 		{
 			this._size = value;
-			this._grid = new byte[this._size.X, this._size.Y];
+			this.Grid = new byte[this._size.X, this._size.Y];
 		}
 	}
 
@@ -25,14 +25,14 @@ internal class DungeonGrid
 
 	private void FillRect(Vector2i position, Vector2i size, byte fillTile)
 	{
-		if (this._grid == null)
+		if (this.Grid == null)
 			return;
 
 		for (int y = 0; y < size.Y; y++)
 		{
 			for (int x = 0; x < size.X; x++)
 			{
-				_grid[position.X + x, position.Y + y] = fillTile;
+				this.Grid[position.X + x, position.Y + y] = fillTile;
 			}
 		}
 	}
@@ -84,10 +84,10 @@ internal class DungeonGrid
 		//}
 		var toB = posB - middleB;
 
-		this.FillRect(posA, fromA + new Vector2i(1, 1), 0);
-		this.FillRect(middleA, middles + new Vector2i(1, 1), 0);
-		this.FillRect(middleB, -middles + new Vector2i(1, 1), 0);
-		this.FillRect(middleB, toB + new Vector2i(1, 1), 0);
+		this.FillRect(posA, fromA + new Vector2i(1, 1), 1);
+		this.FillRect(middleA, middles + new Vector2i(1, 1), 1);
+		this.FillRect(middleB, -middles + new Vector2i(1, 1), 1);
+		this.FillRect(middleB, toB + new Vector2i(1, 1), 1);
 	}
 
 	public void Generate(Vector2i gridSize, Vector2i cellGridSize, int roomCount)
@@ -95,7 +95,7 @@ internal class DungeonGrid
 		this.Size = gridSize;
 		Vector2i cellSize = new(this.Size.X / cellGridSize.X, this.Size.Y / cellGridSize.Y);
 
-		this.FillRect(new(0, 0), this.Size, 1);
+		this.FillRect(new(0, 0), this.Size, 0);
 
 		Cell[,] cellGrid = Generators.CommonWalk(cellGridSize, roomCount);
 
@@ -110,7 +110,7 @@ internal class DungeonGrid
 				if (cellGrid[x, y].Room)
 				{
 					var cell = GenerateRoom(currentCell, cellSize);
-					this.FillRect(currentCell.Position + cell.RoomPosition, cell.RoomSize, 0);
+					this.FillRect(currentCell.Position + cell.RoomPosition, cell.RoomSize, 1);
 					cellGrid[x, y] = cell;
 				}
 				else
@@ -118,7 +118,7 @@ internal class DungeonGrid
 					var cell = GenerateHallway(currentCell, cellSize);
 					if (cellGrid[x, y].HallwayDown || cellGrid[x, y].HallwayRight || (x > 0 && cellGrid[x - 1, y].HallwayRight) || (y > 0 && cellGrid[x, y - 1].HallwayDown))
 					{
-						this.FillRect(currentCell.Position + cell.RoomPosition, cell.RoomSize, 0);
+						this.FillRect(currentCell.Position + cell.RoomPosition, cell.RoomSize, 1);
 					}
 					cellGrid[x, y] = cell;
 				}
@@ -147,14 +147,14 @@ internal class DungeonGrid
 
 	public void Render()
 	{
-		if (this._grid == null || !this.Generated)
+		if (this.Grid == null || !this.Generated)
 			return;
 
 		for (int y = 0; y < this.Size.Y; y++)
 		{
 			for (int x = 0; x < this.Size.X; x++)
 			{
-				switch (this._grid[x, y])
+				switch (this.Grid[x, y])
 				{
 				case 0:
 					Console.Write("  ");
