@@ -39,13 +39,13 @@ internal class DungeonGrid
 
 	private static Cell GenerateRoom(Cell cell, Vector2i cellSize)
 	{
-		Vector2i size = new(Common.RNG.Next(MinimumRoomSize, cellSize.X - 1),
-										Common.RNG.Next(MinimumRoomSize, cellSize.Y - 1));
+		Vector2i size = new(Common.RNG.Next(MinimumRoomSize, cellSize.X - 2),
+										Common.RNG.Next(MinimumRoomSize, cellSize.Y - 2));
 
 		Vector2i remaining = cellSize - size;
 
-		cell.RoomPosition = new(Common.RNG.Next(1, remaining.X - 1),
-								Common.RNG.Next(1, remaining.Y - 1));
+		cell.RoomPosition = new(Common.RNG.Next(2, remaining.X - 1),
+								Common.RNG.Next(2, remaining.Y - 1));
 		cell.RoomSize = size;
 
 		return cell;
@@ -53,11 +53,41 @@ internal class DungeonGrid
 
 	private static Cell GenerateHallway(Cell cell, Vector2i cellSize)
 	{
-		cell.RoomPosition = new(Common.RNG.Next(1, cellSize.X - 1),
-								Common.RNG.Next(1, cellSize.Y - 1));
+		cell.RoomPosition = new(Common.RNG.Next(2, cellSize.X - 1),
+								Common.RNG.Next(2, cellSize.Y - 1));
 		cell.RoomSize = new(1, 1);
 
 		return cell;
+	}
+
+	private void GenerateConnection(Cell cellA, Cell cellB, Vector2i direction)
+	{
+		Vector2i posA = (direction.X == 1 ?
+			new(cellA.RoomSize.X, Common.RNG.Next(0, cellA.RoomSize.Y)) :
+			new(Common.RNG.Next(0, cellA.RoomSize.X), cellA.RoomSize.Y))
+			+ cellA.Position + cellA.RoomPosition;
+		Vector2i posB = (direction.X == 1 ?
+			new(-1, Common.RNG.Next(0, cellB.RoomSize.Y)) :
+			new(Common.RNG.Next(0, cellB.RoomSize.X), -1))
+			+ cellB.Position + cellB.RoomPosition;
+
+		var space = posB - posA;
+		var middleDistance = Common.RNG.Next(1, direction.X == 1 ? space.X : space.Y);
+		var middleA = direction.X == 1 ? new Vector2i(posA.X + middleDistance, posA.Y) : new Vector2i(posA.X, posA.Y + middleDistance);
+		var middleB = direction.X == 1 ? new Vector2i(posA.X + middleDistance, posB.Y) : new Vector2i(posB.X, posA.Y + middleDistance);
+
+		var fromA = middleA - posA;
+		var middles = middleB - middleA;
+		//if (middleA.X > middleB.X || middleA.Y > middleB.Y)
+		//{
+		//	middles = middleA - middleB;
+		//}
+		var toB = posB - middleB;
+
+		this.FillRect(posA, fromA + new Vector2i(1, 1), 0);
+		this.FillRect(middleA, middles + new Vector2i(1, 1), 0);
+		this.FillRect(middleB, -middles + new Vector2i(1, 1), 0);
+		this.FillRect(middleB, toB + new Vector2i(1, 1), 0);
 	}
 
 	public void Generate(Vector2i gridSize, Vector2i cellGridSize, int roomCount)
@@ -74,18 +104,22 @@ internal class DungeonGrid
 			for (ushort x = 0; x < cellGridSize.X; x++)
 			{
 				var currentCell = cellGrid[x, y];
-				Vector2i cellPosition = new(x * cellSize.X, y * cellSize.Y);
+				currentCell.Position = new(x * cellSize.X, y * cellSize.Y);
+				cellGrid[x, y] = currentCell;
 
 				if (cellGrid[x, y].Room)
 				{
 					var cell = GenerateRoom(currentCell, cellSize);
-					this.FillRect(cellPosition + cell.RoomPosition, cell.RoomSize, 0);
+					this.FillRect(currentCell.Position + cell.RoomPosition, cell.RoomSize, 0);
 					cellGrid[x, y] = cell;
 				}
-				else if (cellGrid[x, y].HallwayDown || cellGrid[x, y].HallwayRight)
+				else
 				{
 					var cell = GenerateHallway(currentCell, cellSize);
-					this.FillRect(cellPosition + cell.RoomPosition, cell.RoomSize, 0);
+					if (cellGrid[x, y].HallwayDown || cellGrid[x, y].HallwayRight || (x > 0 && cellGrid[x - 1, y].HallwayRight) || (y > 0 && cellGrid[x, y - 1].HallwayDown))
+					{
+						this.FillRect(currentCell.Position + cell.RoomPosition, cell.RoomSize, 0);
+					}
 					cellGrid[x, y] = cell;
 				}
 			}
@@ -95,10 +129,15 @@ internal class DungeonGrid
 		{
 			for (ushort x = 0; x < cellGridSize.X; x++)
 			{
-				var currentCell = cellGrid[x, y];
-				if (currentCell.HallwayRight)
+				var cellA = cellGrid[x, y];
+
+				if (cellA.HallwayDown)
 				{
-					var rightCell = cellGrid[x + 1, y];
+					this.GenerateConnection(cellA, cellGrid[x, y + 1], new(0, 1));
+				}
+				if (cellA.HallwayRight)
+				{
+					this.GenerateConnection(cellA, cellGrid[x + 1, y], new(1, 0));
 				}
 			}
 		}
@@ -125,6 +164,16 @@ internal class DungeonGrid
 					Console.ForegroundColor = ConsoleColor.White;
 					Console.Write("██");
 					break;
+
+				case 254:
+					Console.ForegroundColor = ConsoleColor.Blue;
+					Console.Write("██");
+					break;
+
+				case 255:
+					Console.ForegroundColor = ConsoleColor.Green;
+					Console.Write("██");
+					break;
 				}
 			}
 			Console.Write('\n');
@@ -133,6 +182,8 @@ internal class DungeonGrid
 
 	public struct Cell
 	{
+		public Vector2i Position = new(0, 0);
+
 		public bool Room = false;
 		public bool HallwayDown = false;
 		public bool HallwayRight = false;
@@ -166,6 +217,7 @@ internal class DungeonGrid
 			Vector2i startPosition = new(Common.RNG.Next(0, cellGridSize.X), Common.RNG.Next(0, cellGridSize.Y));
 
 			Cell[,] cellGrid = new Cell[cellGridSize.X, cellGridSize.Y];
+
 			var rooms = 0;
 			while (rooms < roomCount)
 			{
