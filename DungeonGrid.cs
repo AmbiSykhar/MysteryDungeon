@@ -9,6 +9,10 @@ internal class DungeonGrid
 
 	public byte[,]? Grid { get; private set; }
 
+	public Cell[,]? CellGrid { get; private set; }
+
+	public Entity[] Entities { get; private set; } = [];
+
 	private Vector2i _size;
 
 	public Vector2i Size
@@ -97,30 +101,30 @@ internal class DungeonGrid
 
 		this.FillRect(new(0, 0), this.Size, 0);
 
-		Cell[,] cellGrid = Generators.CommonWalk(cellGridSize, roomCount);
+		CellGrid = Generators.CommonWalk(cellGridSize, roomCount);
 
 		for (ushort y = 0; y < cellGridSize.Y; y++)
 		{
 			for (ushort x = 0; x < cellGridSize.X; x++)
 			{
-				var currentCell = cellGrid[x, y];
+				var currentCell = CellGrid[x, y];
 				currentCell.Position = new(x * cellSize.X, y * cellSize.Y);
-				cellGrid[x, y] = currentCell;
+				CellGrid[x, y] = currentCell;
 
-				if (cellGrid[x, y].Room)
+				if (CellGrid[x, y].Room)
 				{
 					var cell = GenerateRoom(currentCell, cellSize);
 					this.FillRect(currentCell.Position + cell.RoomPosition, cell.RoomSize, 1);
-					cellGrid[x, y] = cell;
+					CellGrid[x, y] = cell;
 				}
 				else
 				{
 					var cell = GenerateHallway(currentCell, cellSize);
-					if (cellGrid[x, y].HallwayDown || cellGrid[x, y].HallwayRight || (x > 0 && cellGrid[x - 1, y].HallwayRight) || (y > 0 && cellGrid[x, y - 1].HallwayDown))
+					if (CellGrid[x, y].HallwayDown || CellGrid[x, y].HallwayRight || (x > 0 && CellGrid[x - 1, y].HallwayRight) || (y > 0 && CellGrid[x, y - 1].HallwayDown))
 					{
 						this.FillRect(currentCell.Position + cell.RoomPosition, cell.RoomSize, 1);
 					}
-					cellGrid[x, y] = cell;
+					CellGrid[x, y] = cell;
 				}
 			}
 		}
@@ -129,15 +133,15 @@ internal class DungeonGrid
 		{
 			for (ushort x = 0; x < cellGridSize.X; x++)
 			{
-				var cellA = cellGrid[x, y];
+				var cellA = CellGrid[x, y];
 
 				if (cellA.HallwayDown)
 				{
-					this.GenerateConnection(cellA, cellGrid[x, y + 1], new(0, 1));
+					this.GenerateConnection(cellA, CellGrid[x, y + 1], new(0, 1));
 				}
 				if (cellA.HallwayRight)
 				{
-					this.GenerateConnection(cellA, cellGrid[x + 1, y], new(1, 0));
+					this.GenerateConnection(cellA, CellGrid[x + 1, y], new(1, 0));
 				}
 			}
 		}

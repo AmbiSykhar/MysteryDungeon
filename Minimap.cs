@@ -18,17 +18,21 @@ internal class Minimap : Drawable
 		this._grid = dungeonGrid;
 
 		Color[,] pixels = new Color[this._grid.Size.X, this._grid.Size.Y];
-		for (int y = 0; y < this._grid?.Size.Y; y++)
+		for (int y = 0; y < this._grid!.Size.Y; y++)
 		{
-			for (int x = 0; x < this._grid?.Size.X; x++)
+			for (int x = 0; x < this._grid!.Size.X; x++)
 			{
-				pixels[x, y] = this._grid?.Grid?[x, y] switch
+				pixels[x, y] = this._grid!.Grid?[x, y] switch
 				{
 					0 => Color.Black,
-					1 => Color.Blue,
+					1 => new Color(128, 128, 128),
 					_ => Color.Red,
 				};
 			}
+		}
+		foreach (Entity entity in this._grid!.Entities )
+		{
+			pixels[entity.Position.X, entity.Position.Y] = entity.MinimapDraw();
 		}
 
 		Image image = new(pixels);
